@@ -1,0 +1,10 @@
+c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomation\bin\Debug\correctomation.exe
+c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomation\bin\Debug\correctomation.pdb
+c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.Form1.resources
+c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.Properties.Resources.resources
+c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.csproj.GenerateResource.Cache
+c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.exe
+c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.pdb
+C:\Users\User\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.csprojResolveAssemblyReference.cache
+C:\Users\User\documents\visual studio 2010\Projects\correctomation\correctomation\bin\Debug\Correctomation.exe.config
+C:\Users\User\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.Form2.resources
