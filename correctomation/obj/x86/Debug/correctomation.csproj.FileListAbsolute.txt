@@ -8,3 +8,13 @@ c:\users\user\documents\visual studio 2010\Projects\correctomation\correctomatio
 C:\Users\User\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.csprojResolveAssemblyReference.cache
 C:\Users\User\documents\visual studio 2010\Projects\correctomation\correctomation\bin\Debug\Correctomation.exe.config
 C:\Users\User\documents\visual studio 2010\Projects\correctomation\correctomation\obj\x86\Debug\correctomation.Form2.resources
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\bin\Debug\Correctomation.exe.config
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.exe
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.pdb
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\bin\Debug\Correctomation.exe
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\bin\Debug\Correctomation.pdb
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.csprojResolveAssemblyReference.cache
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\correctomation.Form1.resources
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\correctomation.Form2.resources
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.Properties.Resources.resources
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.csproj.GenerateResource.Cache

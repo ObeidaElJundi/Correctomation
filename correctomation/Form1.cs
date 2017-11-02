@@ -152,6 +152,24 @@ namespace correctomation
             
         }
 
+        private void dummyProcess()
+        {
+            System.Diagnostics.Process proc = new System.Diagnostics.Process();
+            proc.StartInfo.FileName = binPath + Path.DirectorySeparatorChar + "vcvars32.bat"; //C++ compiler (cl.exe)
+            //proc.StartInfo.Arguments = "/EHsc " + cppPath;  //cpp file to be compiled
+            //proc.StartInfo.Verb = "runas";  //run command, or process, as admin
+            proc.StartInfo.CreateNoWindow = true;
+            proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.RedirectStandardOutput = true;
+
+            proc.Start();  //run the process >> compile
+            string output = proc.StandardOutput.ReadToEnd();
+            Console.WriteLine(output);
+            proc.WaitForExit(); // call only if you would like that the program execution waits until that process finishes
+            Console.WriteLine("setEnvironmentVars process exit code = " + proc.ExitCode);
+        }
+
         private void Form1_DragEnter(object sender, DragEventArgs e)
         {
             e.Effect = DragDropEffects.All;
@@ -163,6 +181,8 @@ namespace correctomation
 
         private void button1_Click(object sender, EventArgs e)
         {
+            dummyProcess();
+            return;
             OpenFileDialog opd = new OpenFileDialog();
             DialogResult result = opd.ShowDialog();
             if (result == DialogResult.OK) // Test result.
