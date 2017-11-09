@@ -18,3 +18,4 @@ C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\corre
 C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\correctomation.Form2.resources
 C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.Properties.Resources.resources
 C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.csproj.GenerateResource.Cache
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.Form3.resources
