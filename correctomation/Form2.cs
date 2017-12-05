@@ -40,7 +40,7 @@ namespace correctomation
         //initialize installation and bin path
         private void initPaths()
         {
-            if (Correctomation.Properties.Settings.Default.pathsInitialized == true)
+            if (correctomation.Properties.Settings.Default.pathsInitialized == true)
             {
                 getPaths();
             }
@@ -75,17 +75,17 @@ namespace correctomation
         //save paths internally, so they can be retrieved next time the app is opened
         private void savePaths()
         {
-            Correctomation.Properties.Settings.Default.binPath = binPath;
-            Correctomation.Properties.Settings.Default.installationPath = visualStudioInstallationPath;
-            Correctomation.Properties.Settings.Default.pathsInitialized = true;
-            Correctomation.Properties.Settings.Default.Save();
+            correctomation.Properties.Settings.Default.binPath = binPath;
+            correctomation.Properties.Settings.Default.installationPath = visualStudioInstallationPath;
+            correctomation.Properties.Settings.Default.pathsInitialized = true;
+            correctomation.Properties.Settings.Default.Save();
         }
 
         //retrieve saved paths
         private void getPaths()
         {
-            binPath = Correctomation.Properties.Settings.Default.binPath;
-            visualStudioInstallationPath = Correctomation.Properties.Settings.Default.installationPath;
+            binPath = correctomation.Properties.Settings.Default.binPath;
+            visualStudioInstallationPath = correctomation.Properties.Settings.Default.installationPath;
         }
 
 
