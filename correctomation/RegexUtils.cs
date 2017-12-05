@@ -17,7 +17,7 @@ namespace correctomation
 
         public static bool cppCompilationOutput(string compilationOutput)
         {
-            Match m = Regex.Match(compilationOutput, "\"/out:.*output\\.exe\"");
+            Match m = Regex.Match(compilationOutput, "/out:.*output\\.exe");
             return m.Success;
         }
 

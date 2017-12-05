@@ -19,3 +19,14 @@ C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\corre
 C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.Properties.Resources.resources
 C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.csproj.GenerateResource.Cache
 C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\Correctomation.Form3.resources
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\bin\Debug\Correctomation.exe.config
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\Correctomation.exe
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\Correctomation.pdb
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\bin\Debug\Correctomation.exe
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\bin\Debug\Correctomation.pdb
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\Correctomation.csprojResolveAssemblyReference.cache
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\correctomation.Form1.resources
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\correctomation.Form2.resources
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\correctomation.Form3.resources
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\correctomation.Properties.Resources.resources
+C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\Correctomation.csproj.GenerateResource.Cache

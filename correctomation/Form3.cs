@@ -184,7 +184,7 @@ namespace correctomation
 
                 if (string.IsNullOrEmpty(cppFilePath))
                 {
-                    updateResult(studentName, -3);
+                    updateResult(studentNumber, studentName, -3);
                 }
                 else if (appendProperties(cppFilePath))
                 {
@@ -193,16 +193,16 @@ namespace correctomation
                     {
                         string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
                         int grade = runExeWithTestCases(exePath);
-                        updateResult(studentName, grade);
+                        updateResult(studentNumber, studentName, grade);
                     }
                     else
                     {
-                        updateResult(studentName, -2);
+                        updateResult(studentNumber, studentName, -2);
                     }
                 }
                 else
                 {
-                    updateResult(studentName, -1);
+                    updateResult(studentNumber, studentName, -1);
                 }
 
                 checkIfDone(--counter,path,cppFile);
@@ -286,16 +286,16 @@ namespace correctomation
             Process runExeProcess = Utils.getProcess(binPath);
             runExeProcess.Start();
             runExeProcess.StandardInput.WriteLine("\"" + exePath + "\"");
-            Thread.Sleep(200);
+            Thread.Sleep(500);
             string[] inputs = input.Split(' ');
             for (int i = 0; i < inputs.Length; i++)
             {
                 runExeProcess.StandardInput.WriteLine(inputs[i]);
-                Thread.Sleep(200);
+                Thread.Sleep(500);
             }
             //Thread.Sleep(500);
             runExeProcess.StandardInput.WriteLine("exit");
-            Thread.Sleep(200);
+            Thread.Sleep(500);
             runExeProcess.WaitForExit();
             string output = runExeProcess.StandardOutput.ReadToEnd(); // <<<< stuck here if there is no Thread.Sleep !!!
             //runExeProcess.WaitForExit();
@@ -309,7 +309,7 @@ namespace correctomation
             if (c == 0) // we are done...
             {
                 //pictureBox1.Visible = false;
-                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.txt", cppName + " Grades\n\n" + finalResult);
+                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.txt", cppName + " Grades\n\n" + "Folder, Student Name, Grade (over100)\n"+ finalResult);
                 MessageBox.Show("Results are available @ final_results.txt", "DONE");
             }
         }
@@ -318,13 +318,13 @@ namespace correctomation
         //result = -2  >>  Compilation Error!
         //result = -3  >>  CPP file not found!
         //result >= 0  >>  his/her grade
-        private void updateResult(string studentName, int result)
+        private void updateResult(string studentNumber, string studentName, int result)
         {
             string r = string.Empty;
             switch (result)
             {
                 case -1:
-                    r = "could not append properties! could not locate return 0 in cpp file!";
+                    r = "Could not append properties! Could not locate return 0 in cpp file!";
                     break;
                 case -2:
                     r = "Compilation Error!";
@@ -338,7 +338,7 @@ namespace correctomation
             }
             Console.WriteLine("updateResult for : " + studentName + " >> result: " + r);
             if (!string.IsNullOrEmpty(finalResult)) finalResult += "\n";
-            finalResult += studentName + "\t" + r;
+            finalResult += studentNumber+","+studentName + "," + r;
         }
 
     }
