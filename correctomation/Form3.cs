@@ -129,7 +129,7 @@ namespace correctomation
             if (checkInputs())
             {
                 finalResult = string.Empty;
-                pictureBox1.Visible = true;
+                //pictureBox1.Visible = true;
                 startInParallel(textBox_cpps_dir.Text, textBox_cpp_file_name.Text);
             }
         }
@@ -283,21 +283,21 @@ namespace correctomation
         //TODO: stuck at reading output! dummy solution: sleep...(search)
         private bool runExe_checkOutput(string exePath, string input, string expectedOutput)
         {
-            Process runExeProcess = Utils.getProcess(binPath);
-            runExeProcess.Start();
-            runExeProcess.StandardInput.WriteLine("\"" + exePath + "\"");
-            Thread.Sleep(500);
+            Process process = new Process();
+            process.StartInfo.FileName = "\"" + exePath + "\"";
+            process.StartInfo.CreateNoWindow = true;  //do not show command prompt window
+            process.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;  //do not show command prompt window
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;  //Handle out manually
+            process.StartInfo.RedirectStandardInput = true;  //Handle input manually
+            process.Start();  //run the process
             string[] inputs = input.Split(' ');
             for (int i = 0; i < inputs.Length; i++)
             {
-                runExeProcess.StandardInput.WriteLine(inputs[i]);
-                Thread.Sleep(500);
+                process.StandardInput.WriteLine(inputs[i]);
             }
-            //Thread.Sleep(500);
-            runExeProcess.StandardInput.WriteLine("exit");
-            Thread.Sleep(500);
-            runExeProcess.WaitForExit();
-            string output = runExeProcess.StandardOutput.ReadToEnd(); // <<<< stuck here if there is no Thread.Sleep !!!
+            process.WaitForExit();
+            string output = process.StandardOutput.ReadToEnd(); // <<<< stuck here if there is no Thread.Sleep !!!
             //runExeProcess.WaitForExit();
             string exeOutput = RegexUtils.getExeOutput(output);
             return exeOutput.Equals(expectedOutput);
