@@ -171,38 +171,42 @@ namespace correctomation
             Parallel.ForEach(dirs, dir => {
 
                 //get student number, which is the last chunk of the path
-                string[] n = dir.Split(Path.DirectorySeparatorChar);
-                string studentNumber = n[n.Length - 1];
+                //string[] n = dir.Split(Path.DirectorySeparatorChar);
+                //string studentNumber = n[n.Length - 1];
 
-                //get student name: the txt file name (assuming there is one txt file only)
-                //clean txt file name: remove extention and replace underscore by space
-                string[] s = getSpecificFileRecursively(dir, "*.txt").Split(Path.DirectorySeparatorChar);
-                string studentName = s[s.Length - 1].Replace(".txt", "").Replace("_", " ");
+                //get student name from the directory name: split on underscores and take the first string
+                string[] n = dir.Split(Path.DirectorySeparatorChar);
+                string studentName = n[n.Length - 1].Split('_')[0];
+                Console.WriteLine("Student Name: " + studentName);
 
                 //get the path of the cpp file to be compiled
                 string cppFilePath = getSpecificFileRecursively(dir, cppFile);
 
                 if (string.IsNullOrEmpty(cppFilePath))
                 {
-                    updateResult(studentNumber, studentName, -3);
-                }
-                else if (appendProperties(cppFilePath))
-                {
-                    string tmpCpp = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "temp.cpp";
-                    if (compile(tmpCpp))
-                    {
-                        string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
-                        int grade = runExeWithTestCases(exePath);
-                        updateResult(studentNumber, studentName, grade);
-                    }
-                    else
-                    {
-                        updateResult(studentNumber, studentName, -2);
-                    }
+                    updateResult(studentName, -3);
                 }
                 else
                 {
-                    updateResult(studentNumber, studentName, -1);
+                    if (checkBox_customize.Checked)
+                    {
+                        if (!appendCustomCorrectionCode(cppFilePath, textBox_customize_code.Text, textBox_customize_marker.Text))
+                        {
+                            updateResult(studentName, -4);
+                            checkIfDone(--counter, path, cppFile);
+                            return;
+                        }
+                    }
+                    if (compile(cppFilePath))
+                    {
+                        string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+                        int grade = runExeWithTestCases(exePath);
+                        updateResult(studentName, grade);
+                    }
+                    else
+                    {
+                        updateResult(studentName, -2);
+                    }
                 }
 
                 checkIfDone(--counter,path,cppFile);
@@ -236,6 +240,23 @@ namespace correctomation
             else
             {
                 //MessageBox.Show("could not append! could not locate return!");
+            }
+            return false;
+        }
+
+        //read custom correction code entered by user and append it to cpp file at specific marker
+        private bool appendCustomCorrectionCode(string cppPath, string customCorrectionCode, string marker)
+        {
+            customCorrectionCode = "\n\t" + customCorrectionCode + "\n";
+            //read cpp code to locate marker. Then append custom code after marker
+            string code = File.ReadAllText(cppPath);
+            int markerIndex = RegexUtils.locateCustomCodeMarker(code,marker);
+            Console.WriteLine("markerIndex: " + markerIndex);
+            if (markerIndex != -1)
+            {
+                code = code.Insert(markerIndex, customCorrectionCode);
+                File.WriteAllText(cppPath, code);
+                return true;
             }
             return false;
         }
@@ -309,7 +330,7 @@ namespace correctomation
             if (c == 0) // we are done...
             {
                 //pictureBox1.Visible = false;
-                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.txt", cppName + " Grades\n\n" + "Folder, Student Name, Grade (over100)\n"+ finalResult);
+                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.txt", cppName + " Grades\n\n" + "Student Name, Grade (over100)\n"+ finalResult);
                 MessageBox.Show("Results are available @ final_results.txt", "DONE");
             }
         }
@@ -318,7 +339,7 @@ namespace correctomation
         //result = -2  >>  Compilation Error!
         //result = -3  >>  CPP file not found!
         //result >= 0  >>  his/her grade
-        private void updateResult(string studentNumber, string studentName, int result)
+        private void updateResult(string studentName, int result)
         {
             string r = string.Empty;
             switch (result)
@@ -332,13 +353,22 @@ namespace correctomation
                 case -3:
                     r = "CPP file not found!";
                     break;
+                case -4:
+                    r = "Cannot locate custom code marker!";
+                    break;
                 default:
                     r = result.ToString();
                     break;
             }
             Console.WriteLine("updateResult for : " + studentName + " >> result: " + r);
             if (!string.IsNullOrEmpty(finalResult)) finalResult += "\n";
-            finalResult += studentNumber+","+studentName + "," + r;
+            finalResult += studentName + "," + r;
+        }
+
+        private void checkBox_customize_CheckedChanged(object sender, EventArgs e)
+        {
+            textBox_customize_marker.Visible = checkBox_customize.Checked;
+            textBox_customize_code.Visible = checkBox_customize.Checked;
         }
 
     }
