@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using SharpCompress.Archives;
+using SharpCompress.Readers;
 
 namespace correctomation
 {
@@ -136,16 +138,6 @@ namespace correctomation
 
         private bool checkInputs()
         {
-            if (string.IsNullOrEmpty(textBox_properties.Text))
-            {
-                MessageBox.Show("Please enter some properties");
-                return false;
-            }
-            if (textBox_properties.Text.Contains(' '))
-            {
-                MessageBox.Show("No spaces are allowed in properties!");
-                return false;
-            }
             if (string.IsNullOrEmpty(textBox_cpp_file_name.Text))
             {
                 MessageBox.Show("Please enter CPP file name");
@@ -161,10 +153,18 @@ namespace correctomation
                 MessageBox.Show("Please enter CPPs directory");
                 return false;
             }
+            if (checkBox_customize.Checked)
+            {
+                if (string.IsNullOrEmpty(textBox_customize_marker.Text) || string.IsNullOrEmpty(textBox_customize_code.Text))
+                {
+                    MessageBox.Show("Please enter custom code and its marker");
+                    return false;
+                }
+            }
             return true;
         }
 
-        private void startInParallel(string path, string cppFile)
+        private void startInParallel(string path, string cppFileName)
         {
             string[] dirs = Directory.GetDirectories(path);
             int counter = dirs.Length;
@@ -177,85 +177,67 @@ namespace correctomation
                 //get student name from the directory name: split on underscores and take the first string
                 string[] n = dir.Split(Path.DirectorySeparatorChar);
                 string studentName = n[n.Length - 1].Split('_')[0];
-                Console.WriteLine("Student Name: " + studentName);
-
-                //get the path of the cpp file to be compiled
-                string cppFilePath = getSpecificFileRecursively(dir, cppFile);
-
-                if (string.IsNullOrEmpty(cppFilePath))
+                
+                //get archive file (rar. if no rar, zip) path then extract it
+                string archivePath = getSpecificFileRecursively(dir, "*.rar");
+                if (string.IsNullOrEmpty(archivePath)) archivePath = getSpecificFileRecursively(dir, "*.zip");
+                if (string.IsNullOrEmpty(archivePath))
                 {
-                    updateResult(studentName, -3);
+                    updateResult(studentName, -5);
                 }
                 else
                 {
-                    if (checkBox_customize.Checked)
-                    {
-                        if (!appendCustomCorrectionCode(cppFilePath, textBox_customize_code.Text, textBox_customize_marker.Text))
-                        {
-                            updateResult(studentName, -4);
-                            checkIfDone(--counter, path, cppFile);
-                            return;
-                        }
-                    }
-                    if (compile(cppFilePath))
-                    {
-                        string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
-                        int grade = runExeWithTestCases(exePath);
-                        updateResult(studentName, grade);
+                    extract(archivePath, new FileInfo(archivePath).Directory.FullName);
+
+                    //get the path of the cpp file
+                    string cppFilePath = getSpecificFileRecursively(dir, cppFileName);
+                    if (string.IsNullOrEmpty(cppFilePath))
+                    { //cpp not found!
+                        updateResult(studentName, -3);
                     }
                     else
                     {
-                        updateResult(studentName, -2);
+                        //read code from cpp file and append custom code if necessary
+                        string code = File.ReadAllText(cppFilePath);
+                        if (checkBox_customize.Checked)
+                        {
+                            if (!appendCustomCorrectionCode(cppFilePath, ref code, textBox_customize_code.Text, textBox_customize_marker.Text))
+                            { //error appending custom code!
+                                updateResult(studentName, -4);
+                                checkIfDone(--counter, path, cppFileName);
+                                return;
+                            }
+                        }
+                        //create a temp cpp file to be compiled
+                        string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + cppFileName + "_temp.cpp";
+                        File.WriteAllText(tempCppFilePath, code);
+                        if (compile(tempCppFilePath, studentName))
+                        { //compiled successfully. run output exe with test cases and get grade
+                            string exePath = new FileInfo(tempCppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+                            int grade = runExeWithTestCases(exePath);
+                            updateResult(studentName, grade);
+                        }
+                        else
+                        {
+                            updateResult(studentName, -2);
+                        }
                     }
                 }
 
-                checkIfDone(--counter,path,cppFile);
+                checkIfDone(--counter,path,cppFileName);
 
             });
         }
 
-        //read properties entered by user and append them to cpp file
-        private bool appendProperties(string cppPath)
-        {
-            //read props - append cout<<pros to cpp file - compile cpp - read in.txt - iterate through in.txt - init & run new process that runs exe - feed input for exe - append to output - check output with out.txt
-            string[] props = textBox_properties.Text.Split(';'); //get properties to be appended to cpp file
-            string toBeAppended = "\n\n\t";
-            string tmpCpp = new FileInfo(cppPath).Directory.FullName + Path.DirectorySeparatorChar + "temp.cpp";
-            if (props.Length > 0)
-            { //construct the cout statement: properties separated by spaces
-                toBeAppended += "cout<<" + "\">>>\"<<" + props[0];
-                for (int i = 1; i < props.Length; i++)
-                    toBeAppended += "<<\" \"<<" + props[i];
-                toBeAppended += "<<\"<<<\"" + ";\n\n\t";
-            }
-            //read cpp code to locate 'return 0;' to append properties before it
-            string code = File.ReadAllText(cppPath);
-            Match m = RegexUtils.return0InCpp(code);
-            if (m.Success)
-            {
-                code = code.Insert(m.Index, toBeAppended);
-                File.WriteAllText(tmpCpp, code);
-                return true;
-            }
-            else
-            {
-                //MessageBox.Show("could not append! could not locate return!");
-            }
-            return false;
-        }
-
         //read custom correction code entered by user and append it to cpp file at specific marker
-        private bool appendCustomCorrectionCode(string cppPath, string customCorrectionCode, string marker)
+        private bool appendCustomCorrectionCode(string cppPath, ref string originalCode, string customCorrectionCode, string marker)
         {
             customCorrectionCode = "\n\t" + customCorrectionCode + "\n";
-            //read cpp code to locate marker. Then append custom code after marker
-            string code = File.ReadAllText(cppPath);
-            int markerIndex = RegexUtils.locateCustomCodeMarker(code,marker);
-            Console.WriteLine("markerIndex: " + markerIndex);
+            //locate marker. Then append custom code after marker
+            int markerIndex = RegexUtils.locateCustomCodeMarker(originalCode, marker);
             if (markerIndex != -1)
             {
-                code = code.Insert(markerIndex, customCorrectionCode);
-                File.WriteAllText(cppPath, code);
+                originalCode = originalCode.Insert(markerIndex, customCorrectionCode);
                 return true;
             }
             return false;
@@ -263,13 +245,15 @@ namespace correctomation
 
         // compiles cpp file executing 'cl' command through cmd process
         // return true if cpp is compiled successfully, false otherwise
-        private bool compile(string cppPath)
+        private bool compile(string cppPath, string studentName)
         {
-            Process p = Utils.getProcess(binPath);  //get nre process
+            Process p = Utils.getProcess(binPath);  //get cmd process
             p.Start();  //run the process
             p.StandardInput.WriteLine("\"" + binPath + Path.DirectorySeparatorChar + "vcvars32.bat" + "\"");  //set environment variables
             string exePath = new FileInfo(cppPath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
-            p.StandardInput.WriteLine("cl /EHsc \"" + cppPath + "\" -o \"" + exePath + "\"");  // add -o >> redirect output file
+            string objPath = new FileInfo(cppPath).Directory.FullName + Path.DirectorySeparatorChar + studentName.Replace(' ','_') + ".obj";
+            //p.StandardInput.WriteLine("cl /EHsc \"" + cppPath + "\" -o \"" + exePath);  // add -o >> redirect output file
+            p.StandardInput.WriteLine("cl /EHsc \"/Fe" + exePath + "\" \"/Fo" + objPath + "\" \"" + cppPath + "\"");  // /Fe: redirect output.exe file, /Fo: redirect obj file
             p.StandardInput.WriteLine("exit");  // close cmd
             string output = p.StandardOutput.ReadToEnd();  // get process output
             Console.WriteLine(cppPath + " >> compilation output: " + output);
@@ -301,7 +285,6 @@ namespace correctomation
 
         //run the compiled exe and compare the exe output with the expected output
         //returns true if the same, false otherwise
-        //TODO: stuck at reading output! dummy solution: sleep...(search)
         private bool runExe_checkOutput(string exePath, string input, string expectedOutput)
         {
             Process process = new Process();
@@ -309,7 +292,7 @@ namespace correctomation
             process.StartInfo.CreateNoWindow = true;  //do not show command prompt window
             process.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;  //do not show command prompt window
             process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;  //Handle out manually
+            process.StartInfo.RedirectStandardOutput = true;  //Handle output manually
             process.StartInfo.RedirectStandardInput = true;  //Handle input manually
             process.Start();  //run the process
             string[] inputs = input.Split(' ');
@@ -318,8 +301,7 @@ namespace correctomation
                 process.StandardInput.WriteLine(inputs[i]);
             }
             process.WaitForExit();
-            string output = process.StandardOutput.ReadToEnd(); // <<<< stuck here if there is no Thread.Sleep !!!
-            //runExeProcess.WaitForExit();
+            string output = process.StandardOutput.ReadToEnd();
             string exeOutput = RegexUtils.getExeOutput(output);
             return exeOutput.Equals(expectedOutput);
         }
@@ -330,8 +312,8 @@ namespace correctomation
             if (c == 0) // we are done...
             {
                 //pictureBox1.Visible = false;
-                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.txt", cppName + " Grades\n\n" + "Student Name, Grade (over100)\n"+ finalResult);
-                MessageBox.Show("Results are available @ final_results.txt", "DONE");
+                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.csv", "# " + cppName + " Grades\n" + "Student Name,Grade (over100)\n"+ finalResult);
+                MessageBox.Show("Results are available @ final_results.csv", "DONE");
             }
         }
 
@@ -354,7 +336,10 @@ namespace correctomation
                     r = "CPP file not found!";
                     break;
                 case -4:
-                    r = "Cannot locate custom code marker!";
+                    r = "Could not locate custom code marker!";
+                    break;
+                case -5:
+                    r = "No archive file!";
                     break;
                 default:
                     r = result.ToString();
@@ -369,6 +354,24 @@ namespace correctomation
         {
             textBox_customize_marker.Visible = checkBox_customize.Checked;
             textBox_customize_code.Visible = checkBox_customize.Checked;
+        }
+
+        private void extract(string archivedPath, string destinationPath)
+        {
+            var archive = ArchiveFactory.Open(archivedPath);
+            foreach (var entry in archive.Entries)
+            {
+                if (!entry.IsDirectory)
+                {
+                    //Console.WriteLine(entry.Key);
+                    entry.WriteToDirectory(destinationPath, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
+                }
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            extract("C:\\Users\\User\\Desktop\\New folder\\New folder\\bla2.rar", "C:\\Users\\User\\Desktop\\New folder\\New folder");
         }
 
     }

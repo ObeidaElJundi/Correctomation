@@ -34,8 +34,6 @@
             this.textBox_in_out = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.textBox_cpp_file_name = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.textBox_properties = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
             this.checkBox_customize = new System.Windows.Forms.CheckBox();
             this.textBox_customize_marker = new System.Windows.Forms.TextBox();
@@ -109,27 +107,6 @@
             this.textBox_cpp_file_name.Size = new System.Drawing.Size(493, 20);
             this.textBox_cpp_file_name.TabIndex = 11;
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.BackColor = System.Drawing.Color.Transparent;
-            this.label2.Font = new System.Drawing.Font("Times New Roman", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.label2.Location = new System.Drawing.Point(12, 95);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(77, 17);
-            this.label2.TabIndex = 12;
-            this.label2.Text = "Properties";
-            // 
-            // textBox_properties
-            // 
-            this.textBox_properties.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_properties.Location = new System.Drawing.Point(172, 95);
-            this.textBox_properties.Name = "textBox_properties";
-            this.textBox_properties.Size = new System.Drawing.Size(493, 20);
-            this.textBox_properties.TabIndex = 13;
-            // 
             // button1
             // 
             this.button1.BackColor = System.Drawing.SystemColors.MenuHighlight;
@@ -150,7 +127,7 @@
             this.checkBox_customize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.checkBox_customize.Font = new System.Drawing.Font("Times New Roman", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkBox_customize.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.checkBox_customize.Location = new System.Drawing.Point(15, 118);
+            this.checkBox_customize.Location = new System.Drawing.Point(15, 93);
             this.checkBox_customize.Name = "checkBox_customize";
             this.checkBox_customize.Size = new System.Drawing.Size(93, 21);
             this.checkBox_customize.TabIndex = 30;
@@ -162,7 +139,7 @@
             // 
             this.textBox_customize_marker.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_customize_marker.Location = new System.Drawing.Point(172, 121);
+            this.textBox_customize_marker.Location = new System.Drawing.Point(172, 95);
             this.textBox_customize_marker.Name = "textBox_customize_marker";
             this.textBox_customize_marker.Size = new System.Drawing.Size(493, 20);
             this.textBox_customize_marker.TabIndex = 31;
@@ -172,10 +149,10 @@
             // 
             this.textBox_customize_code.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_customize_code.Location = new System.Drawing.Point(12, 147);
+            this.textBox_customize_code.Location = new System.Drawing.Point(12, 121);
             this.textBox_customize_code.Multiline = true;
             this.textBox_customize_code.Name = "textBox_customize_code";
-            this.textBox_customize_code.Size = new System.Drawing.Size(653, 200);
+            this.textBox_customize_code.Size = new System.Drawing.Size(653, 226);
             this.textBox_customize_code.TabIndex = 32;
             this.textBox_customize_code.Visible = false;
             // 
@@ -188,8 +165,6 @@
             this.Controls.Add(this.textBox_customize_marker);
             this.Controls.Add(this.checkBox_customize);
             this.Controls.Add(this.button1);
-            this.Controls.Add(this.textBox_properties);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.textBox_cpp_file_name);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox_in_out);
@@ -212,8 +187,6 @@
         private System.Windows.Forms.TextBox textBox_in_out;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox textBox_cpp_file_name;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.TextBox textBox_properties;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.CheckBox checkBox_customize;
         private System.Windows.Forms.TextBox textBox_customize_marker;
