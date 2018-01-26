@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using SharpCompress.Archives;
 using SharpCompress.Readers;
+using System.Collections.Generic;
 
 namespace correctomation
 {
@@ -27,6 +28,12 @@ namespace correctomation
             InitializeComponent();
             binPath = Utils.getVisualStudioBinPathFromRegistryKey();
             Console.WriteLine("start");
+        }
+
+        private void Form3_Load(object sender, EventArgs e)
+        {
+            if (correctomation.Properties.Settings.Default.userInputsSaved)
+                getLatestUserInputs();
         }
 
         //set background gradient
@@ -52,7 +59,6 @@ namespace correctomation
             {
                 textBox_cpps_dir.Text = cppsDirectory;
             }
-            //TODO: handle else
         }
 
         private void button_in_out_Click(object sender, EventArgs e)
@@ -62,7 +68,6 @@ namespace correctomation
             {
                 textBox_in_out.Text = inOutDirectory;
             }
-            //TODO: handle else
         }
 
         private string directoryDialog()
@@ -130,6 +135,8 @@ namespace correctomation
         {
             if (checkInputs())
             {
+                savePaths(textBox_cpps_dir.Text, textBox_in_out.Text, textBox_cpp_file_name.Text,
+                    checkBox_customize.Checked, textBox_customize_marker.Text, textBox_customize_code.Text);
                 finalResult = string.Empty;
                 //pictureBox1.Visible = true;
                 startInParallel(textBox_cpps_dir.Text, textBox_cpp_file_name.Text);
@@ -179,47 +186,62 @@ namespace correctomation
                 string studentName = n[n.Length - 1].Split('_')[0];
                 
                 //get archive file (rar. if no rar, zip) path then extract it
-                string archivePath = getSpecificFileRecursively(dir, "*.rar");
-                if (string.IsNullOrEmpty(archivePath)) archivePath = getSpecificFileRecursively(dir, "*.zip");
+                string archivePath = getSpecificFileRecursively(dir, "*.zip");
+                if (string.IsNullOrEmpty(archivePath)) archivePath = getSpecificFileRecursively(dir, "*.rar");
                 if (string.IsNullOrEmpty(archivePath))
                 {
                     updateResult(studentName, -5);
                 }
                 else
                 {
-                    extract(archivePath, new FileInfo(archivePath).Directory.FullName);
-
-                    //get the path of the cpp file
-                    string cppFilePath = getSpecificFileRecursively(dir, cppFileName);
-                    if (string.IsNullOrEmpty(cppFilePath))
-                    { //cpp not found!
-                        updateResult(studentName, -3);
+                    if (!extract(archivePath, new FileInfo(archivePath).Directory.FullName))
+                    { // could not extract archive!
+                        updateResult(studentName, -7);
                     }
                     else
                     {
-                        //read code from cpp file and append custom code if necessary
-                        string code = File.ReadAllText(cppFilePath);
-                        if (checkBox_customize.Checked)
-                        {
-                            if (!appendCustomCorrectionCode(cppFilePath, ref code, textBox_customize_code.Text, textBox_customize_marker.Text))
-                            { //error appending custom code!
-                                updateResult(studentName, -4);
-                                checkIfDone(--counter, path, cppFileName);
-                                return;
-                            }
-                        }
-                        //create a temp cpp file to be compiled
-                        string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + cppFileName + "_temp.cpp";
-                        File.WriteAllText(tempCppFilePath, code);
-                        if (compile(tempCppFilePath, studentName))
-                        { //compiled successfully. run output exe with test cases and get grade
-                            string exePath = new FileInfo(tempCppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
-                            int grade = runExeWithTestCases(exePath);
-                            updateResult(studentName, grade);
+                        //get the path of the cpp file
+                        string cppFilePath = getSpecificFileRecursively(dir, cppFileName);
+                        if (string.IsNullOrEmpty(cppFilePath))
+                        { //cpp not found!
+                            updateResult(studentName, -3);
                         }
                         else
                         {
-                            updateResult(studentName, -2);
+                            //read code from cpp file and append timer & custom code if necessary
+                            string code = File.ReadAllText(cppFilePath);
+                            if (appendTimerCode(ref code))
+                            { // timer coded added
+                                if (checkBox_customize.Checked)
+                                {
+                                    if (!appendCustomCorrectionCode(cppFilePath, ref code, textBox_customize_code.Text, textBox_customize_marker.Text))
+                                    { //error appending custom code!
+                                        updateResult(studentName, -4);
+                                        checkIfDone(--counter, path, cppFileName);
+                                        return;
+                                    }
+                                }
+                                //create a temp cpp file to be compiled
+                                string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + cppFileName + "_temp.cpp";
+                                File.WriteAllText(tempCppFilePath, code);
+                                if (compile(tempCppFilePath, studentName))
+                                { //compiled successfully. run output exe with test cases and get grade
+                                    string exePath = new FileInfo(tempCppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+                                    Dictionary<string, object> results = runExeWithTestCases(exePath);
+                                    int grade = (int)results["percent"];
+                                    string testCases = (string)results["test cases"];
+                                    int executionTime = (int)results["average execution time"];
+                                    updateResult(studentName, grade, testCases, executionTime);
+                                }
+                                else
+                                {
+                                    updateResult(studentName, -2);
+                                }
+                            }
+                            else
+                            { // error adding timer code! 
+                                updateResult(studentName, -6);
+                            }
                         }
                     }
                 }
@@ -227,6 +249,23 @@ namespace correctomation
                 checkIfDone(--counter,path,cppFileName);
 
             });
+        }
+
+        //append timer code to cpp file to measure execution time
+        private bool appendTimerCode(ref string originalCode)
+        {
+            //add the include statement at the beginning
+            originalCode = originalCode.Insert(0, "#include <ctime>\n");
+            //locate the beginning of main function content. Then append timer code
+            int mainContentStartIndex = RegexUtils.locateMainContentStart(originalCode);
+            if (mainContentStartIndex == -1) return false;
+            originalCode = originalCode.Insert(mainContentStartIndex, "\n\tclock_t begin = clock();\n");
+            //locate the end of main function content. Then append timer code
+            int mainContentEndIndex = RegexUtils.locateMainContentEnd(originalCode);
+            if (mainContentEndIndex == -1) return false;
+            string timerEndCode = "clock_t end = clock();\n\tdouble elapsed = double(end-begin) / (CLOCKS_PER_SEC/1000000.0);\n\tcout<<\":::\"<<elapsed<<\":::\"<<endl;\n\t";
+            originalCode = originalCode.Insert(mainContentEndIndex, timerEndCode);
+            return true;
         }
 
         //read custom correction code entered by user and append it to cpp file at specific marker
@@ -265,27 +304,45 @@ namespace correctomation
         // 2. read expected outputs from output.txt
         // 3. run exe with custom inputs (test cases)
         // 4. compare exe output with expected output
-        // returns grade percentage
-        private int runExeWithTestCases(string exePath)
+        // returns grade percentage, successful test cases, and execution time as dictionary
+        private Dictionary<string, object> runExeWithTestCases(string exePath)
         {
             string exeDirectory = new FileInfo(exePath).Directory.FullName;
             string[] inputs_testCases = File.ReadAllLines(textBox_in_out.Text + Path.DirectorySeparatorChar + "input.txt");
             string[] expectedOutputs = File.ReadAllLines(textBox_in_out.Text + Path.DirectorySeparatorChar + "output.txt");
+            string testCasesResult = string.Empty;
             int correct = 0;
+            List<int> executionTimes = new List<int>();
             for (int i = 0; i < inputs_testCases.Length; i++)
             {
-                if (runExe_checkOutput(exePath, inputs_testCases[i], expectedOutputs[i]))
+                string processOutput = runExe(exePath, inputs_testCases[i]);
+                Console.WriteLine("run Exe output = " + processOutput);
+                executionTimes.Add(RegexUtils.getExecutionTime(processOutput));
+                Console.WriteLine("execution time = " + RegexUtils.getExecutionTime(processOutput));
+                string solution = RegexUtils.getExeOutput(processOutput);
+                if (solution.Equals(expectedOutputs[i]))
+                {
                     correct++;
+                    testCasesResult += "1";
+                }
+                else
+                {
+                    testCasesResult += "0";
+                }
             }
             int percent = 0;
             if (correct > 0)
                 percent = correct * 100 / inputs_testCases.Length;
-            return percent;
+            Dictionary<string, object> results = new Dictionary<string, object>();
+            results.Add("percent", percent);
+            results.Add("test cases", testCasesResult);
+            results.Add("average execution time", (int)executionTimes.Average());
+            return results;
         }
 
         //run the compiled exe and compare the exe output with the expected output
-        //returns true if the same, false otherwise
-        private bool runExe_checkOutput(string exePath, string input, string expectedOutput)
+        //returns process output as string
+        private string runExe(string exePath, string input)
         {
             Process process = new Process();
             process.StartInfo.FileName = "\"" + exePath + "\"";
@@ -302,8 +359,9 @@ namespace correctomation
             }
             process.WaitForExit();
             string output = process.StandardOutput.ReadToEnd();
-            string exeOutput = RegexUtils.getExeOutput(output);
-            return exeOutput.Equals(expectedOutput);
+            return output;
+            //string exeOutput = RegexUtils.getExeOutput(output);
+            //return exeOutput.Equals(expectedOutput);
         }
 
         private void checkIfDone(int c, string path, string cppName)
@@ -312,7 +370,7 @@ namespace correctomation
             if (c == 0) // we are done...
             {
                 //pictureBox1.Visible = false;
-                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.csv", "# " + cppName + " Grades\n" + "Student Name,Grade (over100)\n"+ finalResult);
+                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.csv", "# " + cppName + " Grades\n" + "Student Name,Grade (over 100),Tese Cases,Execution Time (microSeconds)\n"+ finalResult);
                 MessageBox.Show("Results are available @ final_results.csv", "DONE");
             }
         }
@@ -341,6 +399,12 @@ namespace correctomation
                 case -5:
                     r = "No archive file!";
                     break;
+                case -6:
+                    r = "Could not append timer code!";
+                    break;
+                case -7:
+                    r = "Could not extract archive!!";
+                    break;
                 default:
                     r = result.ToString();
                     break;
@@ -350,22 +414,66 @@ namespace correctomation
             finalResult += studentName + "," + r;
         }
 
+        private void updateResult(string studentName, int result, string testCases, int executionTime)
+        {
+            if (!string.IsNullOrEmpty(finalResult)) finalResult += "\n";
+            finalResult += studentName + "," + result + "," + testCases + "," + executionTime;
+        }
+
         private void checkBox_customize_CheckedChanged(object sender, EventArgs e)
         {
             textBox_customize_marker.Visible = checkBox_customize.Checked;
             textBox_customize_code.Visible = checkBox_customize.Checked;
         }
 
-        private void extract(string archivedPath, string destinationPath)
+        private bool extract(string archivedPath, string destinationPath)
         {
-            var archive = ArchiveFactory.Open(archivedPath);
-            foreach (var entry in archive.Entries)
+            try
             {
-                if (!entry.IsDirectory)
+                var archive = ArchiveFactory.Open(archivedPath);
+                foreach (var entry in archive.Entries)
                 {
-                    //Console.WriteLine(entry.Key);
-                    entry.WriteToDirectory(destinationPath, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
+                    if (!entry.IsDirectory)
+                    {
+                        entry.WriteToDirectory(destinationPath, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
+                    }
                 }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("extraction exception! " + ex.Message);
+                return false;
+            }
+        }
+
+        //save user inputs, so they can be retrieved next time the app is opened
+        private void savePaths(string cppsDirectort, string inputOutputDirectort, string cppFileName, bool customize, string customizeMarker, string customizeCode)
+        {
+            correctomation.Properties.Settings.Default.cppsDirectort = cppsDirectort;
+            correctomation.Properties.Settings.Default.inputOutputDirectort = inputOutputDirectort;
+            correctomation.Properties.Settings.Default.cppFileName = cppFileName;
+            correctomation.Properties.Settings.Default.customize = customize;
+            if (customize)
+            {
+                correctomation.Properties.Settings.Default.customizeMarker = customizeMarker;
+                correctomation.Properties.Settings.Default.customizeCode = customizeCode;
+            }
+            correctomation.Properties.Settings.Default.userInputsSaved = true;
+            correctomation.Properties.Settings.Default.Save();
+        }
+
+        //retrieve latest user inputs
+        private void getLatestUserInputs()
+        {
+            textBox_cpps_dir.Text = correctomation.Properties.Settings.Default.cppsDirectort;
+            textBox_in_out.Text = correctomation.Properties.Settings.Default.inputOutputDirectort;
+            textBox_cpp_file_name.Text = correctomation.Properties.Settings.Default.cppFileName;
+            if (correctomation.Properties.Settings.Default.customize)
+            {
+                checkBox_customize.Checked = true;
+                textBox_customize_marker.Text = correctomation.Properties.Settings.Default.customizeMarker;
+                textBox_customize_code.Text = correctomation.Properties.Settings.Default.customizeCode;
             }
         }
 
