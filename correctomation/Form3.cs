@@ -210,37 +210,42 @@ namespace correctomation
                         {
                             //read code from cpp file and append timer & custom code if necessary
                             string code = File.ReadAllText(cppFilePath);
-                            if (appendTimerCode(ref code))
-                            { // timer coded added
-                                if (checkBox_customize.Checked)
-                                {
-                                    if (!appendCustomCorrectionCode(cppFilePath, ref code, textBox_customize_code.Text, textBox_customize_marker.Text))
-                                    { //error appending custom code!
-                                        updateResult(studentName, -4);
-                                        checkIfDone(--counter, path, cppFileName);
-                                        return;
-                                    }
-                                }
-                                //create a temp cpp file to be compiled
-                                string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + cppFileName + "_temp.cpp";
-                                File.WriteAllText(tempCppFilePath, code);
-                                if (compile(tempCppFilePath, studentName))
-                                { //compiled successfully. run output exe with test cases and get grade
-                                    string exePath = new FileInfo(tempCppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
-                                    Dictionary<string, object> results = runExeWithTestCases(exePath);
-                                    int grade = (int)results["percent"];
-                                    string testCases = (string)results["test cases"];
-                                    int executionTime = (int)results["average execution time"];
-                                    updateResult(studentName, grade, testCases, executionTime);
-                                }
-                                else
-                                {
-                                    updateResult(studentName, -2);
+
+                            if (checkBox_timer.Checked)
+                            { // timer code should be added
+                                if (!appendTimerCode(ref code))
+                                { //error appending timer code!
+                                    updateResult(studentName, -6);
+                                    checkIfDone(--counter, path, cppFileName);
+                                    return;
                                 }
                             }
+
+                            if (checkBox_customize.Checked)
+                            { // custom code should be added
+                                if (!appendCustomCorrectionCode(cppFilePath, ref code, textBox_customize_code.Text, textBox_customize_marker.Text))
+                                { //error appending custom code!
+                                    updateResult(studentName, -4);
+                                    checkIfDone(--counter, path, cppFileName);
+                                    return;
+                                }
+                            }
+
+                            //create a temp cpp file to be compiled
+                            string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + cppFileName + "_temp.cpp";
+                            File.WriteAllText(tempCppFilePath, code);
+                            if (compile(tempCppFilePath, studentName))
+                            { //compiled successfully. run output exe with test cases and get grade
+                                string exePath = new FileInfo(tempCppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+                                Dictionary<string, object> results = runExeWithTestCases(exePath);
+                                int grade = (int)results["percent"];
+                                string testCases = (string)results["test cases"];
+                                int executionTime = (int)results["average execution time"];
+                                updateResult(studentName, grade, testCases, executionTime);
+                            }
                             else
-                            { // error adding timer code! 
-                                updateResult(studentName, -6);
+                            {
+                                updateResult(studentName, -2);
                             }
                         }
                     }
@@ -317,8 +322,10 @@ namespace correctomation
             {
                 string processOutput = runExe(exePath, inputs_testCases[i]);
                 Console.WriteLine("run Exe output = " + processOutput);
-                executionTimes.Add(RegexUtils.getExecutionTime(processOutput));
-                Console.WriteLine("execution time = " + RegexUtils.getExecutionTime(processOutput));
+                if(checkBox_timer.Checked) {
+                    executionTimes.Add(RegexUtils.getExecutionTime(processOutput));
+                    Console.WriteLine("execution time = " + RegexUtils.getExecutionTime(processOutput));
+                }
                 string solution = RegexUtils.getExeOutput(processOutput);
                 if (solution.Equals(expectedOutputs[i]))
                 {
@@ -336,7 +343,9 @@ namespace correctomation
             Dictionary<string, object> results = new Dictionary<string, object>();
             results.Add("percent", percent);
             results.Add("test cases", testCasesResult);
-            results.Add("average execution time", (int)executionTimes.Average());
+            int avg = 0;
+            if(checkBox_timer.Checked) avg = (int)executionTimes.Average();
+            results.Add("average execution time", avg);
             return results;
         }
 
@@ -369,9 +378,30 @@ namespace correctomation
             Console.WriteLine("checkIfDone >> c = " + c);
             if (c == 0) // we are done...
             {
+                writeFinalResultsToFile(path, cppName);
+            }
+        }
+
+        private void writeFinalResultsToFile(string path, string cppName)
+        {
+            try
+            {
                 //pictureBox1.Visible = false;
-                File.WriteAllText(path + Path.DirectorySeparatorChar + "final_results.csv", "# " + cppName + " Grades\n" + "Student Name,Grade (over 100),Tese Cases,Execution Time (microSeconds)\n"+ finalResult);
-                MessageBox.Show("Results are available @ final_results.csv", "DONE");
+                string results = "# " + cppName + " Grades\n" + "Student Name,Grade (over 100),Tese Cases";
+                if (checkBox_timer.Checked) results += ",Execution Time (microSeconds)";
+                results += "\n" + finalResult;
+                string resultsPath = path + Path.DirectorySeparatorChar + "final_results.csv";
+                File.WriteAllText(resultsPath, results);
+                //MessageBox.Show("Results are available @ final_results.csv", "DONE");
+                new CustomDialog(resultsPath).ShowDialog();
+            }
+            catch (Exception e)
+            {
+                DialogResult d = MessageBox.Show("Could not write results to final_results.csv\nPlease close it and try again...", "ERROR!", MessageBoxButtons.RetryCancel);
+                if (d == DialogResult.Retry)
+                {
+                    writeFinalResultsToFile(path, cppName);
+                }
             }
         }
 
@@ -417,7 +447,8 @@ namespace correctomation
         private void updateResult(string studentName, int result, string testCases, int executionTime)
         {
             if (!string.IsNullOrEmpty(finalResult)) finalResult += "\n";
-            finalResult += studentName + "," + result + "," + testCases + "," + executionTime;
+            finalResult += studentName + "," + result + "," + testCases;
+            if (checkBox_timer.Checked) finalResult += "," + executionTime;
         }
 
         private void checkBox_customize_CheckedChanged(object sender, EventArgs e)

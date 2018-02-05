@@ -31,3 +31,4 @@ C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debu
 C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\correctomation.Properties.Resources.resources
 C:\Users\oe17\Desktop\correctaumation\Correctomation\correctomation\obj\x86\Debug\Correctomation.csproj.GenerateResource.Cache
 C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\bin\Debug\SharpCompress.dll
+C:\Users\User\American University of Beirut\Ola El Khatib - Correctomation\correctomation\correctomation\obj\x86\Debug\correctomation.CustomDialog.resources

@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form3));
             this.button_cpps_dir = new System.Windows.Forms.Button();
             this.button_in_out = new System.Windows.Forms.Button();
             this.textBox_cpps_dir = new System.Windows.Forms.TextBox();
@@ -38,6 +39,7 @@
             this.checkBox_customize = new System.Windows.Forms.CheckBox();
             this.textBox_customize_marker = new System.Windows.Forms.TextBox();
             this.textBox_customize_code = new System.Windows.Forms.TextBox();
+            this.checkBox_timer = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // button_cpps_dir
@@ -126,24 +128,25 @@
             // checkBox_customize
             // 
             this.checkBox_customize.AutoSize = true;
+            this.checkBox_customize.BackColor = System.Drawing.Color.Transparent;
             this.checkBox_customize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.checkBox_customize.Font = new System.Drawing.Font("Times New Roman", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkBox_customize.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.checkBox_customize.Location = new System.Drawing.Point(15, 93);
+            this.checkBox_customize.Location = new System.Drawing.Point(172, 93);
             this.checkBox_customize.Name = "checkBox_customize";
             this.checkBox_customize.Size = new System.Drawing.Size(93, 21);
             this.checkBox_customize.TabIndex = 30;
             this.checkBox_customize.Text = "Customize";
-            this.checkBox_customize.UseVisualStyleBackColor = true;
+            this.checkBox_customize.UseVisualStyleBackColor = false;
             this.checkBox_customize.CheckedChanged += new System.EventHandler(this.checkBox_customize_CheckedChanged);
             // 
             // textBox_customize_marker
             // 
             this.textBox_customize_marker.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_customize_marker.Location = new System.Drawing.Point(172, 95);
+            this.textBox_customize_marker.Location = new System.Drawing.Point(266, 95);
             this.textBox_customize_marker.Name = "textBox_customize_marker";
-            this.textBox_customize_marker.Size = new System.Drawing.Size(493, 20);
+            this.textBox_customize_marker.Size = new System.Drawing.Size(399, 20);
             this.textBox_customize_marker.TabIndex = 31;
             this.textBox_customize_marker.Visible = false;
             // 
@@ -159,11 +162,26 @@
             this.textBox_customize_code.TabIndex = 32;
             this.textBox_customize_code.Visible = false;
             // 
+            // checkBox_timer
+            // 
+            this.checkBox_timer.AutoSize = true;
+            this.checkBox_timer.BackColor = System.Drawing.Color.Transparent;
+            this.checkBox_timer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.checkBox_timer.Font = new System.Drawing.Font("Times New Roman", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBox_timer.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.checkBox_timer.Location = new System.Drawing.Point(15, 93);
+            this.checkBox_timer.Name = "checkBox_timer";
+            this.checkBox_timer.Size = new System.Drawing.Size(64, 21);
+            this.checkBox_timer.TabIndex = 33;
+            this.checkBox_timer.Text = "Timer";
+            this.checkBox_timer.UseVisualStyleBackColor = false;
+            // 
             // Form3
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(677, 388);
+            this.Controls.Add(this.checkBox_timer);
             this.Controls.Add(this.textBox_customize_code);
             this.Controls.Add(this.textBox_customize_marker);
             this.Controls.Add(this.checkBox_customize);
@@ -174,8 +192,9 @@
             this.Controls.Add(this.textBox_cpps_dir);
             this.Controls.Add(this.button_in_out);
             this.Controls.Add(this.button_cpps_dir);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form3";
-            this.Text = "Form3";
+            this.Text = "Correctomation";
             this.Load += new System.EventHandler(this.Form3_Load);
             this.Resize += new System.EventHandler(this.Form3_Resize);
             this.ResumeLayout(false);
@@ -195,6 +214,7 @@
         private System.Windows.Forms.CheckBox checkBox_customize;
         private System.Windows.Forms.TextBox textBox_customize_marker;
         private System.Windows.Forms.TextBox textBox_customize_code;
+        private System.Windows.Forms.CheckBox checkBox_timer;
 
     }
 }
