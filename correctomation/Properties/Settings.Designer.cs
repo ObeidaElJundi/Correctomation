@@ -74,12 +74,12 @@ namespace correctomation.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string cppsDirectort {
+        public string cppsDirectory {
             get {
-                return ((string)(this["cppsDirectort"]));
+                return ((string)(this["cppsDirectory"]));
             }
             set {
-                this["cppsDirectort"] = value;
+                this["cppsDirectory"] = value;
             }
         }
         
@@ -152,6 +152,54 @@ namespace correctomation.Properties {
             }
             set {
                 this["Setting"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string inputDirectory {
+            get {
+                return ((string)(this["inputDirectory"]));
+            }
+            set {
+                this["inputDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string outputDirectory {
+            get {
+                return ((string)(this["outputDirectory"]));
+            }
+            set {
+                this["outputDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool inputIsFile {
+            get {
+                return ((bool)(this["inputIsFile"]));
+            }
+            set {
+                this["inputIsFile"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool outputIsFile {
+            get {
+                return ((bool)(this["outputIsFile"]));
+            }
+            set {
+                this["outputIsFile"] = value;
             }
         }
     }

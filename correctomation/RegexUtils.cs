@@ -42,7 +42,8 @@ namespace correctomation
         public static int locateCustomCodeMarker(string code, string marker)
         {
             int markerIndex = -1;
-            Match m = Regex.Match(code, marker);
+            //Match m = Regex.Match(code, marker); // if marker is followed by extra text (ex: //////), this won't work. search untill \n
+            Match m = Regex.Match(code, marker + ".*\n");
             if (m.Success)
             {
                 Console.WriteLine("index: " + m.Index + "\nLength: " + m.Length);
@@ -84,6 +85,31 @@ namespace correctomation
             {
                 return -1;
             }
+        }
+
+        public static string replaceInputOrOutputFilePath(string code, string filePath, string pattern){
+            return Regex.Replace(code, pattern, delegate(Match m){
+                System.Diagnostics.Debug.WriteLine("\n\nm.Groups[1].Value = " + m.Groups[1].Value + "\n\n");
+                System.Diagnostics.Debug.WriteLine("\n\nm.Groups[2].Value = " + m.Groups[2].Value + "\n\n");
+                System.Diagnostics.Debug.WriteLine("\n\nm.Groups[3].Value = " + m.Groups[3].Value + "\n\n");
+                //string replacement = code.Replace(m.Groups[1].Value, "\"" + filePath + "\"");
+                string replacement = m.Groups[1].Value + "\"" + filePath + "\"" + m.Groups[3].Value;
+                return replacement;
+            });
+        }
+
+        public static string replaceInputFilePath(string code, string inputFilePath)
+        {
+            //string pattern = @"ifstream(.|\n)+\((.+)\)";
+            string pattern = @"(ifstream[^\(]+\()([^\(]+)(\))";
+            return replaceInputOrOutputFilePath(code, inputFilePath, pattern);
+        }
+
+        public static string replaceOutputFilePath(string code, string outputFilePath)
+        {
+            //string pattern = @"ofstream(.|\n)+\((.+)\)";
+            string pattern = @"(ofstream[^\(]+\()([^\(]+)(\))";
+            return replaceInputOrOutputFilePath(code, outputFilePath, pattern);
         }
 
     }

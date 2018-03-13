@@ -63,11 +63,7 @@ namespace correctomation
 
         private void button_in_out_Click(object sender, EventArgs e)
         {
-            string inOutDirectory = directoryDialog();
-            if (!string.IsNullOrEmpty(inOutDirectory))
-            {
-                textBox_in_out.Text = inOutDirectory;
-            }
+
         }
 
         private string directoryDialog()
@@ -135,8 +131,8 @@ namespace correctomation
         {
             if (checkInputs())
             {
-                savePaths(textBox_cpps_dir.Text, textBox_in_out.Text, textBox_cpp_file_name.Text,
-                    checkBox_customize.Checked, textBox_customize_marker.Text, textBox_customize_code.Text);
+                savePaths(textBox_cpps_dir.Text, textBox_input.Text, checkBox_inputIsFile.Checked, textBox_output.Text, checkBox_outputIsFile.Checked,
+                    textBox_cpp_file_name.Text, checkBox_customize.Checked, textBox_customize_marker.Text, textBox_customize_code.Text);
                 finalResult = string.Empty;
                 //pictureBox1.Visible = true;
                 startInParallel(textBox_cpps_dir.Text, textBox_cpp_file_name.Text);
@@ -150,9 +146,14 @@ namespace correctomation
                 MessageBox.Show("Please enter CPP file name");
                 return false;
             }
-            if (string.IsNullOrEmpty(textBox_in_out.Text))
+            if (string.IsNullOrEmpty(textBox_input.Text))
             {
-                MessageBox.Show("Please enter input/output directory");
+                MessageBox.Show("Please enter input directory");
+                return false;
+            }
+            if (string.IsNullOrEmpty(textBox_output.Text))
+            {
+                MessageBox.Show("Please enter output directory");
                 return false;
             }
             if (string.IsNullOrEmpty(textBox_cpps_dir.Text))
@@ -231,7 +232,30 @@ namespace correctomation
                                 }
                             }
 
-                            //create a temp cpp file to be compiled
+                            //List<string> EXEsToRun = new List<string>();
+                            if (checkBox_inputIsFile.Checked)
+                            {
+                                //EXEsToRun = inputIsFile_compileCPP_getExePath(cppFilePath, code, cppFileName, studentName, textBox_input.Text, textBox_output.Text);
+                                if (checkBox_outputIsFile.Checked) inputIsFile_and_outputIsFile(cppFilePath, code, cppFileName, studentName, textBox_input.Text, textBox_output.Text);
+                                else inputIsFile_and_outputIsNotFile(cppFilePath, code, cppFileName, studentName, textBox_input.Text, textBox_output.Text);
+                            }
+                            else
+                            {
+                                //EXEsToRun = inputIsNotFile_compileCPP_getExePath(cppFilePath, code, cppFileName, studentName);
+                                if (checkBox_outputIsFile.Checked) inputIsNotFile_and_outputIsFile(cppFilePath, code, cppFileName, studentName, textBox_input.Text, textBox_output.Text);
+                                else inputIsNotFile_and_outputIsNotFile(cppFilePath, code, cppFileName, studentName, textBox_input.Text, textBox_output.Text);
+                            }
+
+                            /*if (checkBox_outputIsFile.Checked)
+                            {
+                                
+                            }
+                            else
+                            {
+                                outputIsNotFile(EXEsToRun, studentName);
+                            }*/
+
+                            /*//create a temp cpp file to be compiled
                             string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + cppFileName + "_temp.cpp";
                             File.WriteAllText(tempCppFilePath, code);
                             if (compile(tempCppFilePath, studentName))
@@ -246,7 +270,7 @@ namespace correctomation
                             else
                             {
                                 updateResult(studentName, -2);
-                            }
+                            }*/
                         }
                     }
                 }
@@ -255,6 +279,175 @@ namespace correctomation
 
             });
         }
+
+        private void inputIsFile_and_outputIsFile(string cppFilePath, string code, string problemName, string studentName, string inputTxtPath, string outputTxtPath)
+        {
+            problemName = problemName.Replace(".cpp", "").Replace(".CPP", "");
+            string[] inputsFilesPaths = File.ReadAllLines(inputTxtPath);
+            string[] outputsFilesPaths = File.ReadAllLines(outputTxtPath);
+
+            int correct = 0;
+            string testCasesResult = string.Empty;
+
+            string txtOutputPath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.txt";
+            txtOutputPath = txtOutputPath.Replace("\\", "\\\\");
+
+            for (int i = 0; i < inputsFilesPaths.Length; i++)
+            {
+                string newCode = RegexUtils.replaceInputFilePath(code, inputsFilesPaths[i]);
+                newCode = RegexUtils.replaceOutputFilePath(newCode, txtOutputPath);
+                //create a temp cpp file to be compiled
+                string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
+                File.WriteAllText(tempCppFilePath, newCode);
+                if (compile(tempCppFilePath, studentName))
+                {
+                    string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+                    runExe(exePath, "");
+                    string expectedOutput = File.ReadAllText(outputsFilesPaths[i]);
+                    string output = File.ReadAllText(txtOutputPath);
+                    if (expectedOutput.Equals(output)) {
+                        correct++;
+                        testCasesResult += "1";
+                    } else
+                        testCasesResult += "0";
+                }
+                else
+                {
+                    updateResult(studentName, -2);
+                    return;
+                }
+            }
+
+            int percent = 0;
+            if (correct > 0) percent = correct * 100 / inputsFilesPaths.Length;
+            updateResult(studentName, percent, testCasesResult, 0);
+        }
+
+
+        private void inputIsFile_and_outputIsNotFile(string cppFilePath, string code, string problemName, string studentName, string inputTxtPath, string outputTxtPath)
+        {
+            problemName = problemName.Replace(".cpp", "").Replace(".CPP", "");
+            string[] inputsFilesPaths = File.ReadAllLines(inputTxtPath);
+            string[] expectedOutputs = File.ReadAllLines(outputTxtPath);
+
+            int correct = 0;
+            string testCasesResult = string.Empty;
+
+            for (int i = 0; i < inputsFilesPaths.Length; i++)
+            {
+                string newCode = RegexUtils.replaceInputFilePath(code, inputsFilesPaths[i]);
+                //Console.WriteLine("********************************\niteration : " + i + "\n" + newCode);
+                //create a temp cpp file to be compiled
+                string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
+                File.WriteAllText(tempCppFilePath, newCode);
+                if (compile(tempCppFilePath, studentName))
+                {
+                    string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+                    string output = runExe(exePath, "");
+                    string solution = RegexUtils.getExeOutput(output);
+                    if (expectedOutputs[i].Equals(solution))
+                    {
+                        correct++;
+                        testCasesResult += "1";
+                    }
+                    else
+                        testCasesResult += "0";
+                }
+                else
+                {
+                    updateResult(studentName, -2);
+                    return;
+                }
+            }
+
+            int percent = 0;
+            if (correct > 0) percent = correct * 100 / inputsFilesPaths.Length;
+            updateResult(studentName, percent, testCasesResult, 0);
+        }
+
+
+        private void inputIsNotFile_and_outputIsFile(string cppFilePath, string code, string problemName, string studentName, string inputTxtPath, string outputTxtPath)
+        {
+            problemName = problemName.Replace(".cpp", "").Replace(".CPP", "");
+            string[] inputs = File.ReadAllLines(inputTxtPath);
+            string[] outputsFilesPaths = File.ReadAllLines(outputTxtPath);
+
+            int correct = 0;
+            string testCasesResult = string.Empty;
+
+            string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
+            string txtOutputPath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.txt";
+            txtOutputPath = txtOutputPath.Replace("\\", "\\\\");
+            string newCode = RegexUtils.replaceOutputFilePath(code, txtOutputPath);
+            File.WriteAllText(tempCppFilePath, newCode);
+            if (!compile(tempCppFilePath, studentName))
+            {
+                updateResult(studentName, -2);
+                return;
+            }
+
+            string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+            for (int i = 0; i < inputs.Length; i++)
+            {
+                runExe(exePath, inputs[i]);
+                string expectedOutput = File.ReadAllText(outputsFilesPaths[i]);
+                string output = File.ReadAllText(txtOutputPath);
+                if (expectedOutput.Equals(output))
+                {
+                    correct++;
+                    testCasesResult += "1";
+                }
+                else
+                    testCasesResult += "0";
+            }
+
+            int percent = 0;
+            if (correct > 0) percent = correct * 100 / inputs.Length;
+            updateResult(studentName, percent, testCasesResult, 0);
+        }
+
+
+        private void inputIsNotFile_and_outputIsNotFile(string cppFilePath, string code, string problemName, string studentName, string inputTxtPath, string outputTxtPath)
+        {
+            
+            problemName = problemName.Replace(".cpp", "").Replace(".CPP", "");
+            string[] inputs = File.ReadAllLines(inputTxtPath);
+            string[] expectedOutputs = File.ReadAllLines(outputTxtPath);
+
+            int correct = 0;
+            string testCasesResult = string.Empty;
+
+            string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
+            File.WriteAllText(tempCppFilePath, code);
+            if (!compile(tempCppFilePath, studentName))
+            {
+                updateResult(studentName, -2);
+                return;
+            }
+
+            string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
+            for (int i = 0; i < inputs.Length; i++)
+            {
+
+                string exeOutput = runExe(exePath, inputs[i]);
+                string solution = RegexUtils.getExeOutput(exeOutput);
+                if (expectedOutputs[i].Equals(solution))
+                {
+                    correct++;
+                    testCasesResult += "1";
+                }
+                else
+                    testCasesResult += "0";
+            }
+
+            int percent = 0;
+            if (correct > 0) percent = correct * 100 / inputs.Length;
+            updateResult(studentName, percent, testCasesResult, 0);
+        }
+
+
+
+
 
         //append timer code to cpp file to measure execution time
         private bool appendTimerCode(ref string originalCode)
@@ -313,8 +506,8 @@ namespace correctomation
         private Dictionary<string, object> runExeWithTestCases(string exePath)
         {
             string exeDirectory = new FileInfo(exePath).Directory.FullName;
-            string[] inputs_testCases = File.ReadAllLines(textBox_in_out.Text + Path.DirectorySeparatorChar + "input.txt");
-            string[] expectedOutputs = File.ReadAllLines(textBox_in_out.Text + Path.DirectorySeparatorChar + "output.txt");
+            string[] inputs_testCases = File.ReadAllLines(textBox_input.Text + Path.DirectorySeparatorChar + "input.txt");
+            string[] expectedOutputs = File.ReadAllLines(textBox_input.Text + Path.DirectorySeparatorChar + "output.txt");
             string testCasesResult = string.Empty;
             int correct = 0;
             List<int> executionTimes = new List<int>();
@@ -371,6 +564,11 @@ namespace correctomation
             return output;
             //string exeOutput = RegexUtils.getExeOutput(output);
             //return exeOutput.Equals(expectedOutput);
+        }
+
+        private void runExe(string exePath)
+        {
+            string s = runExe(exePath, string.Empty);
         }
 
         private void checkIfDone(int c, string path, string cppName)
@@ -479,10 +677,13 @@ namespace correctomation
         }
 
         //save user inputs, so they can be retrieved next time the app is opened
-        private void savePaths(string cppsDirectort, string inputOutputDirectort, string cppFileName, bool customize, string customizeMarker, string customizeCode)
+        private void savePaths(string cppsDirectort, string inputDirectory, bool inputIsFile, string outputDirectory, bool outputIsFile, string cppFileName, bool customize, string customizeMarker, string customizeCode)
         {
-            correctomation.Properties.Settings.Default.cppsDirectort = cppsDirectort;
-            correctomation.Properties.Settings.Default.inputOutputDirectort = inputOutputDirectort;
+            correctomation.Properties.Settings.Default.cppsDirectory = cppsDirectort;
+            correctomation.Properties.Settings.Default.inputDirectory = inputDirectory;
+            correctomation.Properties.Settings.Default.inputIsFile = inputIsFile;
+            correctomation.Properties.Settings.Default.outputDirectory = outputDirectory;
+            correctomation.Properties.Settings.Default.outputIsFile = outputIsFile;
             correctomation.Properties.Settings.Default.cppFileName = cppFileName;
             correctomation.Properties.Settings.Default.customize = customize;
             if (customize)
@@ -497,8 +698,11 @@ namespace correctomation
         //retrieve latest user inputs
         private void getLatestUserInputs()
         {
-            textBox_cpps_dir.Text = correctomation.Properties.Settings.Default.cppsDirectort;
-            textBox_in_out.Text = correctomation.Properties.Settings.Default.inputOutputDirectort;
+            textBox_cpps_dir.Text = correctomation.Properties.Settings.Default.cppsDirectory;
+            textBox_input.Text = correctomation.Properties.Settings.Default.inputDirectory;
+            checkBox_inputIsFile.Checked = correctomation.Properties.Settings.Default.inputIsFile;
+            textBox_output.Text = correctomation.Properties.Settings.Default.outputDirectory;
+            checkBox_outputIsFile.Checked = correctomation.Properties.Settings.Default.outputIsFile;
             textBox_cpp_file_name.Text = correctomation.Properties.Settings.Default.cppFileName;
             if (correctomation.Properties.Settings.Default.customize)
             {
@@ -511,6 +715,25 @@ namespace correctomation
         private void button2_Click(object sender, EventArgs e)
         {
             extract("C:\\Users\\User\\Desktop\\New folder\\New folder\\bla2.rar", "C:\\Users\\User\\Desktop\\New folder\\New folder");
+        }
+
+        private void button_input_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Select input txt file";
+            if (openFileDialog.ShowDialog() == DialogResult.OK) {
+                textBox_input.Text = openFileDialog.FileName;
+            }
+        }
+
+        private void button_output_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Select output txt file";
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                textBox_output.Text = openFileDialog.FileName;
+            }
         }
 
     }
