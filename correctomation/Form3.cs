@@ -280,11 +280,31 @@ namespace correctomation
             });
         }
 
+        private string[] makeAbsolutePathIfRelative(string filePath)
+        {
+            string absolutePath = new FileInfo(filePath).Directory.FullName + Path.DirectorySeparatorChar;
+            absolutePath = absolutePath.Replace("\\", "\\\\");
+            string[] filesPaths = File.ReadAllLines(filePath);
+            string[] updatedFilesPaths = new string[filesPaths.Length];
+            for (int i = 0; i<filesPaths.Length ;i++ )
+            {
+                string path = filesPaths[i];
+                if(path.Contains('\\')) { // path is already absolute
+                    updatedFilesPaths[i] = filesPaths[i];
+                } else {
+                    updatedFilesPaths[i] = absolutePath + filesPaths[i];
+                }
+            }
+            return updatedFilesPaths;
+        }
+
         private void inputIsFile_and_outputIsFile(string cppFilePath, string code, string problemName, string studentName, string inputTxtPath, string outputTxtPath)
         {
             problemName = problemName.Replace(".cpp", "").Replace(".CPP", "");
-            string[] inputsFilesPaths = File.ReadAllLines(inputTxtPath);
-            string[] outputsFilesPaths = File.ReadAllLines(outputTxtPath);
+            //string[] inputsFilesPaths = File.ReadAllLines(inputTxtPath);
+            string[] inputsFilesPaths = makeAbsolutePathIfRelative(inputTxtPath);
+            //string[] outputsFilesPaths = File.ReadAllLines(outputTxtPath);
+            string[] outputsFilesPaths = makeAbsolutePathIfRelative(outputTxtPath);
 
             int correct = 0;
             string testCasesResult = string.Empty;
@@ -294,8 +314,10 @@ namespace correctomation
 
             for (int i = 0; i < inputsFilesPaths.Length; i++)
             {
-                string newCode = RegexUtils.replaceInputFilePath(code, inputsFilesPaths[i]);
-                newCode = RegexUtils.replaceOutputFilePath(newCode, txtOutputPath);
+                //string newCode = RegexUtils.replaceInputFilePath(code, inputsFilesPaths[i]);
+                //newCode = RegexUtils.replaceOutputFilePath(newCode, txtOutputPath);
+                string newCode = RegexUtils.replaceFilePath(code, inputsFilesPaths[i], true);
+                newCode = RegexUtils.replaceFilePath(newCode, txtOutputPath, false);
                 //create a temp cpp file to be compiled
                 string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
                 File.WriteAllText(tempCppFilePath, newCode);
@@ -327,41 +349,62 @@ namespace correctomation
         private void inputIsFile_and_outputIsNotFile(string cppFilePath, string code, string problemName, string studentName, string inputTxtPath, string outputTxtPath)
         {
             problemName = problemName.Replace(".cpp", "").Replace(".CPP", "");
-            string[] inputsFilesPaths = File.ReadAllLines(inputTxtPath);
+            //string[] inputsFilesPaths = File.ReadAllLines(inputTxtPath);
+            string[] inputsFilesPaths = makeAbsolutePathIfRelative(inputTxtPath);
             string[] expectedOutputs = File.ReadAllLines(outputTxtPath);
 
-            int correct = 0;
+            //partial grading:
+            //before: 1 for successful test case, 0 for failed test case
+            //now: correct outputs separately per test case
+            //ex: if expected output if >>3 2 5<<, and the program output is >>3 2 6<<, instead of 0%, it will be counted as 67%, and the test case will be 2 (max 3) instead of 0
+            //int testCasesCount = expectedOutputs.Length;
+            //int outputCountPerTestCase = expectedOutputs[0].Split(' ').Length;
+            int totalTestCases = 0;
+
+            int correct = 0, correctPerTestCase = 0;
             string testCasesResult = string.Empty;
 
             for (int i = 0; i < inputsFilesPaths.Length; i++)
             {
-                string newCode = RegexUtils.replaceInputFilePath(code, inputsFilesPaths[i]);
+                //string newCode = RegexUtils.replaceInputFilePath(code, inputsFilesPaths[i]);
+                string newCode = RegexUtils.replaceFilePath(code, inputsFilesPaths[i], true);
                 //Console.WriteLine("********************************\niteration : " + i + "\n" + newCode);
                 //create a temp cpp file to be compiled
                 string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
-                File.WriteAllText(tempCppFilePath, newCode);
-                if (compile(tempCppFilePath, studentName))
-                {
+                File.WriteAllText(tempCppFilePath, newCode); //write updated code to temp CPP file to be compiled
+                if (compile(tempCppFilePath, studentName)) //compile
+                { //if compiled successfully, run exe and compare its output with the expected output and get final grade
                     string exePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.exe";
                     string output = runExe(exePath, "");
                     string solution = RegexUtils.getExeOutput(output);
-                    if (expectedOutputs[i].Equals(solution))
+                    correctPerTestCase = 0;
+                    string[] expectedOutputsForOneTestCase = expectedOutputs[i].Split(' ');
+                    string[] outputsForOneTestCase = solution.Split(' ');
+                    for (int j = 0; j < expectedOutputsForOneTestCase.Length; j++)
                     {
-                        correct++;
-                        testCasesResult += "1";
+                        totalTestCases++;
+                        Console.WriteLine("expectedOutputsForOneTestCase[" + j + "]: "+expectedOutputsForOneTestCase[j]+"\noutputsForOneTestCase[" + j + "]:" + outputsForOneTestCase[j] + " \n");
+                        if (expectedOutputsForOneTestCase[j].Equals(outputsForOneTestCase[j]))
+                        {
+                            correctPerTestCase++;
+                            correct++;
+                            //testCasesResult += "1";
+                        }
+                        //else
+                            //testCasesResult += "0";
                     }
-                    else
-                        testCasesResult += "0";
+                    testCasesResult += correctPerTestCase.ToString();
                 }
                 else
-                {
+                { //if compilation failed, record so.
                     updateResult(studentName, -2);
                     return;
                 }
             }
 
             int percent = 0;
-            if (correct > 0) percent = correct * 100 / inputsFilesPaths.Length;
+            //if (correct > 0) percent = correct * 100 / inputsFilesPaths.Length;
+            if (correct > 0) percent = correct * 100 / totalTestCases;
             updateResult(studentName, percent, testCasesResult, 0);
         }
 
@@ -370,7 +413,8 @@ namespace correctomation
         {
             problemName = problemName.Replace(".cpp", "").Replace(".CPP", "");
             string[] inputs = File.ReadAllLines(inputTxtPath);
-            string[] outputsFilesPaths = File.ReadAllLines(outputTxtPath);
+            //string[] outputsFilesPaths = File.ReadAllLines(outputTxtPath);
+            string[] outputsFilesPaths = makeAbsolutePathIfRelative(outputTxtPath);
 
             int correct = 0;
             string testCasesResult = string.Empty;
@@ -378,7 +422,8 @@ namespace correctomation
             string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
             string txtOutputPath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + "output.txt";
             txtOutputPath = txtOutputPath.Replace("\\", "\\\\");
-            string newCode = RegexUtils.replaceOutputFilePath(code, txtOutputPath);
+            //string newCode = RegexUtils.replaceOutputFilePath(code, txtOutputPath);
+            string newCode = RegexUtils.replaceFilePath(code, txtOutputPath, false);
             File.WriteAllText(tempCppFilePath, newCode);
             if (!compile(tempCppFilePath, studentName))
             {
@@ -414,7 +459,13 @@ namespace correctomation
             string[] inputs = File.ReadAllLines(inputTxtPath);
             string[] expectedOutputs = File.ReadAllLines(outputTxtPath);
 
-            int correct = 0;
+            //partial grading:
+            //before: 1 for successful test case, 0 for failed test case
+            //now: correct outputs separately per test case
+            //ex: if expected output if >>3 2 5<<, and the program output is >>3 2 6<<, instead of 0%, it will be counted as 67%, and the test case will be 2 (max 3) instead of 0
+            int totalTestCases = 0;
+
+            int correct = 0, correctPerTestCase = 0;
             string testCasesResult = string.Empty;
 
             string tempCppFilePath = new FileInfo(cppFilePath).Directory.FullName + Path.DirectorySeparatorChar + problemName + "_temp.cpp";
@@ -431,17 +482,24 @@ namespace correctomation
 
                 string exeOutput = runExe(exePath, inputs[i]);
                 string solution = RegexUtils.getExeOutput(exeOutput);
-                if (expectedOutputs[i].Equals(solution))
+                string[] expectedOutputsForOneTestCase = expectedOutputs[i].Split(' ');
+                string[] outputsForOneTestCase = solution.Split(' ');
+                for (int j = 0; j < expectedOutputsForOneTestCase.Length; j++)
                 {
-                    correct++;
-                    testCasesResult += "1";
+                    totalTestCases++;
+                    Console.WriteLine("expectedOutputsForOneTestCase[" + j + "]: " + expectedOutputsForOneTestCase[j] + "\noutputsForOneTestCase[" + j + "]:" + outputsForOneTestCase[j] + " \n");
+                    if (expectedOutputsForOneTestCase[j].Equals(outputsForOneTestCase[j]))
+                    {
+                        correctPerTestCase++;
+                        correct++;
+                    }
                 }
-                else
-                    testCasesResult += "0";
+                testCasesResult += correctPerTestCase.ToString();
             }
 
             int percent = 0;
-            if (correct > 0) percent = correct * 100 / inputs.Length;
+            //if (correct > 0) percent = correct * 100 / inputs.Length;
+            if (correct > 0) percent = correct * 100 / totalTestCases;
             updateResult(studentName, percent, testCasesResult, 0);
         }
 

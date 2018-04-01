@@ -89,9 +89,9 @@ namespace correctomation
 
         public static string replaceInputOrOutputFilePath(string code, string filePath, string pattern){
             return Regex.Replace(code, pattern, delegate(Match m){
-                System.Diagnostics.Debug.WriteLine("\n\nm.Groups[1].Value = " + m.Groups[1].Value + "\n\n");
-                System.Diagnostics.Debug.WriteLine("\n\nm.Groups[2].Value = " + m.Groups[2].Value + "\n\n");
-                System.Diagnostics.Debug.WriteLine("\n\nm.Groups[3].Value = " + m.Groups[3].Value + "\n\n");
+                //System.Diagnostics.Debug.WriteLine("\n\nm.Groups[1].Value = " + m.Groups[1].Value + "\n\n");
+                //System.Diagnostics.Debug.WriteLine("\n\nm.Groups[2].Value = " + m.Groups[2].Value + "\n\n");
+                //System.Diagnostics.Debug.WriteLine("\n\nm.Groups[3].Value = " + m.Groups[3].Value + "\n\n");
                 //string replacement = code.Replace(m.Groups[1].Value, "\"" + filePath + "\"");
                 string replacement = m.Groups[1].Value + "\"" + filePath + "\"" + m.Groups[3].Value;
                 return replacement;
@@ -110,6 +110,56 @@ namespace correctomation
             //string pattern = @"ofstream(.|\n)+\((.+)\)";
             string pattern = @"(ofstream[^\(]+\()([^\(]+)(\))";
             return replaceInputOrOutputFilePath(code, outputFilePath, pattern);
+        }
+
+        /*public static string replaceFilePath(string code, string filePath, bool input)
+        {
+            string ch = (input) ? "i" : "o";
+            string pattern1 = @"(" + ch + @"fstream\s+\w+\s*\()([^\)]+)\)";
+            //Match match = Regex.Match(code, pattern1);
+            //if (match.Success)
+            if (Regex.IsMatch(code, pattern1))
+            {
+                return Regex.Replace(code, pattern1, delegate(Match m)
+                {
+                    string replacement = m.Groups[1].Value + "\"" + filePath + "\")";
+                    return replacement;
+                });
+            }
+            else
+            {
+                string pattern2 = ch + @"fstream\s+(\w+)\(([^\)]+)\)";
+            }
+        }*/
+
+
+        public static string replaceFilePath(string code, string filePath, bool input)
+        {
+            string ch = (input) ? "i" : "o";
+            string pattern1 = ch + @"fstream\s+(\w+)"; // ex: ifstream input
+            if (Regex.IsMatch(code, pattern1))
+            {
+                Console.WriteLine("pattern1 match :)");
+                string pattern2 = pattern1 + @"\s*\(([^\)]+)\)"; // ex: ifstream input ("file.txt")
+                //string pattern3 = pattern1 + @"(.*\1\.open)\(([^\)]+)\)";
+                string pattern3 = pattern1 + @"([^\1]+\1\.open)\(([^\)]+)\)";
+                Match match2 = Regex.Match(code, pattern2);
+                Match match3 = Regex.Match(code, pattern3);
+                if (match2.Success)
+                {
+                    Console.WriteLine("pattern2 match :)");
+                    string replacement = ch + "fstream " + match2.Groups[1].Value + "(\"" + filePath + "\")";
+                    return Regex.Replace(code, pattern2, replacement);
+                }
+                else if (match3.Success)
+                {
+                    Console.WriteLine("patten3 match :)");
+                    string replacement = ch + "fstream " + match3.Groups[1].Value + match3.Groups[2].Value + "(\"" + filePath + "\")";
+                    return Regex.Replace(code, pattern3, replacement);
+                }
+                else return code;
+            }
+            else return code;
         }
 
     }
