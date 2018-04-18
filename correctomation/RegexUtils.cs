@@ -142,7 +142,7 @@ namespace correctomation
                 Console.WriteLine("pattern1 match :)");
                 string pattern2 = pattern1 + @"\s*\(([^\)]+)\)"; // ex: ifstream input ("file.txt")
                 //string pattern3 = pattern1 + @"(.*\1\.open)\(([^\)]+)\)";
-                string pattern3 = pattern1 + @"([^\1]+\1\.open)\(([^\)]+)\)";
+                string pattern3 = pattern1 + @"([^\1]+\1\.open\s*)\(([^\)]+)\)";
                 Match match2 = Regex.Match(code, pattern2);
                 Match match3 = Regex.Match(code, pattern3);
                 if (match2.Success)
