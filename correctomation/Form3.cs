@@ -380,9 +380,10 @@ namespace correctomation
                     correctPerTestCase = 0;
                     string[] expectedOutputsForOneTestCase = expectedOutputs[i].Split(' ');
                     string[] outputsForOneTestCase = solution.Split(' ');
-                    for (int j = 0; j < expectedOutputsForOneTestCase.Length; j++)
+                    int loopLimit = (expectedOutputsForOneTestCase.Length < outputsForOneTestCase.Length) ? expectedOutputsForOneTestCase.Length : outputsForOneTestCase.Length;
+                    totalTestCases += expectedOutputsForOneTestCase.Length;
+                    for (int j = 0; j < loopLimit; j++) // loopLimit: to avoid array out of range in expectedOutputsForOneTestCase[j] or outputsForOneTestCase[j]
                     {
-                        totalTestCases++;
                         Console.WriteLine("expectedOutputsForOneTestCase[" + j + "]: "+expectedOutputsForOneTestCase[j]+"\noutputsForOneTestCase[" + j + "]:" + outputsForOneTestCase[j] + " \n");
                         if (expectedOutputsForOneTestCase[j].Equals(outputsForOneTestCase[j]))
                         {
@@ -482,11 +483,13 @@ namespace correctomation
 
                 string exeOutput = runExe(exePath, inputs[i]);
                 string solution = RegexUtils.getExeOutput(exeOutput);
+                correctPerTestCase = 0;
                 string[] expectedOutputsForOneTestCase = expectedOutputs[i].Split(' ');
                 string[] outputsForOneTestCase = solution.Split(' ');
-                for (int j = 0; j < expectedOutputsForOneTestCase.Length; j++)
+                int loopLimit = (expectedOutputsForOneTestCase.Length < outputsForOneTestCase.Length) ? expectedOutputsForOneTestCase.Length : outputsForOneTestCase.Length;
+                totalTestCases += expectedOutputsForOneTestCase.Length;
+                for (int j = 0; j < loopLimit; j++) // loopLimit: to avoid array out of range in expectedOutputsForOneTestCase[j] or outputsForOneTestCase[j]
                 {
-                    totalTestCases++;
                     Console.WriteLine("expectedOutputsForOneTestCase[" + j + "]: " + expectedOutputsForOneTestCase[j] + "\noutputsForOneTestCase[" + j + "]:" + outputsForOneTestCase[j] + " \n");
                     if (expectedOutputsForOneTestCase[j].Equals(outputsForOneTestCase[j]))
                     {
