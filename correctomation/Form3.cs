@@ -649,7 +649,12 @@ namespace correctomation
                 string results = "# " + cppName + " Grades\n" + "Student Name,Grade (over 100),Tese Cases";
                 if (checkBox_timer.Checked) results += ",Execution Time (microSeconds)";
                 results += "\n" + finalResult;
-                string resultsPath = path + Path.DirectorySeparatorChar + "final_results.csv";
+                Match m = Regex.Match(cppName,"(.*).cpp");
+                if (m.Success)
+                {
+                    cppName = m.Groups[1].Value;
+                }
+                string resultsPath = path + Path.DirectorySeparatorChar + "Final_Results_"+ cppName+".csv";
                 File.WriteAllText(resultsPath, results);
                 //MessageBox.Show("Results are available @ final_results.csv", "DONE");
                 new CustomDialog(resultsPath).ShowDialog();
